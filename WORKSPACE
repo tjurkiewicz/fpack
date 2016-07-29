@@ -6,3 +6,10 @@ new_http_archive(
   url="http://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_1_61_0.tar.gz", 
 )
 
+git_repository(
+  name="protobuf",
+  tag="v3.0.0",
+  remote="https://github.com/google/protobuf.git",
+)
+
+

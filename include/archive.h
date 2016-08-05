@@ -18,11 +18,10 @@ using boost::filesystem::directory_entry;
 using boost::filesystem::path;
 using boost::filesystem::recursive_directory_iterator;
 
-namespace fpack {
+namespace multipack {
 
-class PackageDirectoryIterator: public recursive_directory_iterator 
-{
-public:
+class PackageDirectoryIterator: public recursive_directory_iterator {
+ public:
   PackageDirectoryIterator();
   explicit PackageDirectoryIterator(const path& path);
   PackageDirectoryIterator& operator++();
@@ -32,7 +31,7 @@ class PackageDirectory {
  public:
   explicit PackageDirectory(const std::string& packagePath);
   typedef PackageDirectoryIterator Iterator;
-  
+
   Iterator begin() const;
   Iterator end() const;
 
@@ -51,7 +50,7 @@ class Archive {
   std::string path_;
   Metadata metadata_;
 };
-}  // namespace fpack
+}  // namespace multipack
 
 #endif  // INCLUDE_ARCHIVE_H_
 

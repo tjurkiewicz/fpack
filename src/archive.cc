@@ -16,12 +16,12 @@
 using boost::filesystem::path;
 using boost::filesystem::recursive_directory_iterator;
 
-namespace fpack {
+namespace multipack {
 
 PackageDirectoryIterator::PackageDirectoryIterator():
- recursive_directory_iterator() {}
+  recursive_directory_iterator() {}
 
-PackageDirectoryIterator::PackageDirectoryIterator(const path& path): 
+PackageDirectoryIterator::PackageDirectoryIterator(const path& path):
   recursive_directory_iterator(path) {
 }
 
@@ -63,10 +63,11 @@ Archive::Archive(const std::string& archivePath): path_(archivePath) {
 
 void Archive::BuildArchive(const std::string& executablePath, \
     const PackageDirectory& package, const char* entryPath) {
-  fpack::Metadata metadata;
+  multipack::Metadata metadata;
 
 
-  for(PackageDirectory::Iterator it=package.begin(); it!=package.end(); ++it) {
+  for (PackageDirectory::Iterator it=package.begin();
+    it != package.end(); ++it) {
     std::cout << it->path().string() << "\n";
   }
 
@@ -74,7 +75,7 @@ void Archive::BuildArchive(const std::string& executablePath, \
     std::ofstream::out|std::ofstream::app|std::ofstream::binary);
 
   if (!ofs) {
-    throw fpack::ArchiveException("Could not open file for writing");
+    throw multipack::ArchiveException("Could not open file for writing");
   }
 
   uint32_t metadataOffset = htonl(ofs.tellp());
@@ -85,5 +86,5 @@ void Archive::BuildArchive(const std::string& executablePath, \
     sizeof(metadataOffset));
   ofs.close();
 }
-}  // namespace fpack
+}  // namespace multipack
 

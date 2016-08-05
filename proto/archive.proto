@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package fpack;
+package multipack;
 
 message Metadata {
   repeated File files = 1;

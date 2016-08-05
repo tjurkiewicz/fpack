@@ -12,7 +12,7 @@ using boost::program_options::parse_command_line;
 using boost::program_options::store;
 using boost::program_options::value;
 
-void check_options(boost::program_options::variables_map& vm) {
+void check_options(const boost::program_options::variables_map& vm) {
   try {
     notify(vm);
   } catch(std::exception& ex) {
@@ -31,8 +31,7 @@ int main(int argc, char** argv) {
   desc.add_options()
   ("help,h", "print usage message")
   ("executable,e", value(&executablePath)->required(), "packfile executable")
-  ("package,p", value(&packagePath)->required(), "packaging directory")
-  ;
+  ("package,p", value(&packagePath)->required(), "packaging directory");
 
   store(parse_command_line(argc, argv, desc), vm);
 
@@ -40,11 +39,11 @@ int main(int argc, char** argv) {
     std::cout << desc << "\n";
     return 0;
   }
-  
+
   check_options(vm);
 
-  fpack::PackageDirectory package(packagePath);
-  fpack::Archive::BuildArchive(executablePath, package, "entry");
+  multipack::PackageDirectory package(packagePath);
+  multipack::Archive::BuildArchive(executablePath, package, "entry");
   return 0;
 }
 

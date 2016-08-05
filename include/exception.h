@@ -6,7 +6,7 @@
 #include <exception>
 #include <string>
 
-namespace fpack {
+namespace multipack {
 class ArchiveException: public std::exception {
  public:
   explicit ArchiveException(const std::string& msg);
@@ -15,7 +15,7 @@ class ArchiveException: public std::exception {
  private:
   std::string msg_;
 };
-};  // namespace fpack
+};  // namespace multipack
 
 #endif  // INCLUDE_EXCEPTION_H_
 

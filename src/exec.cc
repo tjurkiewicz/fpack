@@ -3,7 +3,7 @@
 #include "archive.h"
 
 int main(int argc, char ** argv) {
-  fpack::Archive archive(argv[0]);
+  multipack::Archive archive(argv[0]);
 
   return 0;
 }

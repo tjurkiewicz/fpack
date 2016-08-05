@@ -9,10 +9,10 @@ cc_proto_library(
 
 cc_library(
   name="archive",
-  srcs=["src/archive.cc"],
-  hdrs=["include/archive.h", "include/exception.h"],
+  srcs=["src/archive.cc", "src/exception.cc",],
+  hdrs=["include/archive.h", "include/exception.h",],
   includes=["include"],
-  deps=[":archive.proto"],
+  deps=[":archive.proto", "@boost//:iostreams", "@boost//:filesystem"],
 )
 
 cc_binary(
@@ -22,9 +22,9 @@ cc_binary(
 )
 
 cc_binary(
-  name="fpack",
-  srcs=["src/main.cc", "include/archive.h", "include/exception.h"],
+  name="pack",
+  srcs=["src/pack.cc",],
   includes=["include"],
-  deps=["@boost//:program_options", ":archive.proto"],
+  deps=["@boost//:program_options", ":archive.proto", ":archive"],
 )
 

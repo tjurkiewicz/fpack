@@ -1,35 +1,50 @@
 // Copyright (c) 2016 Tomasz Jurkiewicz.
 
-#include <arpa/inet.h>
-
+#include <cstdlib>
 #include <iostream>
-#include <fstream>
+
+#include "boost/program_options.hpp"
 
 #include "archive.h"
-#include "exception.h"
-#include "proto/archive.pb.h"
+
+using boost::program_options::notify;
+using boost::program_options::parse_command_line;
+using boost::program_options::store;
+using boost::program_options::value;
+
+void check_options(boost::program_options::variables_map& vm) {
+  try {
+    notify(vm);
+  } catch(std::exception& ex) {
+    std::cerr << ex.what() << "\n";
+    exit(-1);
+  }
+}
 
 int main(int argc, char** argv) {
-  fpack::Metadata metadata;
+  boost::program_options::options_description desc("Allowed options");
+  boost::program_options::variables_map vm;
 
-  metadata.set_entry_path("abcd");
-  metadata.set_data_offset(10);
+  std::string executablePath;
+  std::string packagePath;
 
-  std::ofstream ofs(argv[1],
-    std::ofstream::out|std::ofstream::app|std::ofstream::binary);
+  desc.add_options()
+  ("help,h", "print usage message")
+  ("executable,e", value(&executablePath)->required(), "packfile executable")
+  ("package,p", value(&packagePath)->required(), "packaging directory")
+  ;
 
-  if (!ofs) {
-    throw fpack::ArchiveException();
+  store(parse_command_line(argc, argv, desc), vm);
+
+  if (vm.count("help")) {
+    std::cout << desc << "\n";
+    return 0;
   }
+  
+  check_options(vm);
 
-  std::streampos pos = ofs.tellp();
-  metadata.SerializeToOstream(&ofs);
-
-  uint32_t size = htonl(ofs.tellp() - pos);
-  ofs.write(reinterpret_cast<const char*>(&size), sizeof(size));
-
-  ofs.close();
-
+  fpack::PackageDirectory package(packagePath);
+  fpack::Archive::BuildArchive(executablePath, package, "entry");
   return 0;
 }
 

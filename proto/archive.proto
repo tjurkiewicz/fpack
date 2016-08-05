@@ -3,7 +3,10 @@ syntax = "proto3";
 package fpack;
 
 message Metadata {
-  string entry_path = 1;
-  int32 data_offset = 2;
+  repeated File files = 1;
+}
+
+message File {
+  int32 data_offset = 1;
 }
 

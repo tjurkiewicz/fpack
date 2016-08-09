@@ -80,7 +80,7 @@ PackageDirectory::Iterator PackageDirectory::end() const {
   return it;
 }
 
-ArchiveReader::ArchiveReader(const std::string& archivePath): 
+ArchiveReader::ArchiveReader(const std::string& archivePath):
   archivePath_(archivePath) {
   std::ifstream ifs(archivePath, std::ifstream::binary|std::ifstream::ate);
 
@@ -101,7 +101,7 @@ const Metadata& ArchiveReader::GetMetadata() const {
   return metadata_;
 }
 
-ArchiveWriter::ArchiveWriter(const std::string& executablePath): 
+ArchiveWriter::ArchiveWriter(const std::string& executablePath):
   executablePath_(executablePath) {}
 
 void ArchiveWriter::Build(const PDir& package) {
@@ -116,25 +116,22 @@ void ArchiveWriter::Build(const PDir& package) {
 
 void ArchiveWriter::PrepareBuffer(const PDir& package,
   std::stringstream* buffer, Metadata* metadata) {
-
-  for (PDir::Iterator it=package.begin(); it!=package.end(); ++it) {
-
+  for (PDir::Iterator it=package.begin(); it != package.end(); ++it) {
     File* file = metadata->add_file();
     file->set_offset(buffer->tellp());
-    file->set_file_name(it->path().string());    
+    file->set_file_name(it->path().string());
 
     std::ifstream ifs(it->path().string(), std::ifstream::binary);
     if (!ifs) {
       throw ArchiveException("Could not open file for reading.");
     }
-  
+
     boost::iostreams::copy(ifs, *buffer);
   }
 }
 
 void ArchiveWriter::FlushBuffer(
   std::stringstream* buffer, Metadata* metadata) {
-
   std::ofstream ofs = ofstream(executablePath_);
   metadata->set_file_offset(ofs.tellp());
 
@@ -142,12 +139,11 @@ void ArchiveWriter::FlushBuffer(
   stream.push(boost::iostreams::bzip2_compressor());
   stream.push(ofs);
 
-  buffer->seekp(0); 
+  buffer->seekp(0);
   boost::iostreams::copy(*buffer, stream);
 }
 
 void ArchiveWriter::FlushMetadata(const Metadata& metadata) {
-
   std::ofstream ofs = ofstream(executablePath_);
 
   uint32_t metadataOffset = htonl(ofs.tellp());

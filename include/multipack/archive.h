@@ -19,8 +19,8 @@ namespace multipack {
 
 std::ofstream ofstream(const std::string& filename);
 
-class PackageDirectoryIterator: 
-  public boost::iterator_facade<PackageDirectoryIterator, 
+class PackageDirectoryIterator:
+  public boost::iterator_facade<PackageDirectoryIterator,
     directory_entry, boost::forward_traversal_tag> {
  public:
   PackageDirectoryIterator();

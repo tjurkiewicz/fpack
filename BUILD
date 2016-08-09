@@ -30,3 +30,9 @@ cc_binary(
   deps=["@boost//:program_options", ":archive.proto", ":archive"],
 )
 
+sh_test(
+  name="lint",
+  srcs=["lint.sh"],
+  data=["cpplint.py"] + glob(["include/**/*.h"]) + glob(["src/**/*.cc"]),
+)
+

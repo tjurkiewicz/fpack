@@ -3,10 +3,12 @@ syntax = "proto3";
 package multipack;
 
 message Metadata {
-  repeated File files = 1;
+  int32 file_offset = 1;
+  repeated File file = 2;
 }
 
 message File {
-  int32 data_offset = 1;
+  int32 offset = 1;
+  string file_name = 2;
 }
 

@@ -1,38 +1,69 @@
 // Copyright (c) 2016 Tomasz Jurkiewicz.
 
-#include "archive.h"
+#include "multipack/archive.h"
 
 #include <arpa/inet.h>
 
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include "boost/filesystem.hpp"
+#include "boost/iostreams/copy.hpp"
+#include "boost/iostreams/filtering_stream.hpp"
+#include "boost/iostreams/filter/gzip.hpp"
+#include "boost/iostreams/filter/bzip2.hpp"
 
-#include "exception.h"
+#include "multipack/exception.h"
 #include "proto/archive.pb.h"
 
-using boost::filesystem::path;
+using boost::filesystem::file_size;
+using boost::filesystem::is_regular_file;
 using boost::filesystem::recursive_directory_iterator;
 
 namespace multipack {
 
-PackageDirectoryIterator::PackageDirectoryIterator():
-  recursive_directory_iterator() {}
+std::ofstream ofstream(const std::string& path) {
+  std::ofstream ofs(path,
+    std::ofstream::out|std::ofstream::app|std::ofstream::binary);
 
-PackageDirectoryIterator::PackageDirectoryIterator(const path& path):
-  recursive_directory_iterator(path) {
+  if (!ofs) {
+    throw multipack::ArchiveException("Could not open file for writing.");
+  }
+  return ofs;
 }
 
-PackageDirectory::PackageDirectory(const std::string& packagePath):
-  path_(packagePath) {
+recursive_directory_iterator PackageDirectoryIterator::END = \
+  recursive_directory_iterator();
+
+PackageDirectoryIterator::PackageDirectoryIterator() {}
+
+PackageDirectoryIterator::PackageDirectoryIterator(
+  const boost::filesystem::path& p):
+  it_(p) {
+  if (!IsValid()) {
+    increment();
+  }
 }
 
-PackageDirectoryIterator& PackageDirectoryIterator::operator++() {
-  /* skip files here */
-  recursive_directory_iterator::operator++();
-  return *this;
+void PackageDirectoryIterator::increment() {
+  do {
+    it_++;
+  } while (!IsValid());
+}
+
+bool PackageDirectoryIterator::IsValid() const {
+  return it_ == END || is_regular_file(it_->path());
+}
+
+bool PackageDirectoryIterator::equal(
+  PackageDirectoryIterator const& other) const {
+  return it_ == other.it_;
+}
+
+directory_entry& PackageDirectoryIterator::dereference() const {
+  return *it_;
 }
 
 PackageDirectory::Iterator PackageDirectory::begin() const {
@@ -40,12 +71,17 @@ PackageDirectory::Iterator PackageDirectory::begin() const {
   return it;
 }
 
+PackageDirectory::PackageDirectory(const std::string& packagePath):
+  path_(packagePath) {
+}
+
 PackageDirectory::Iterator PackageDirectory::end() const {
   Iterator it;
   return it;
 }
 
-Archive::Archive(const std::string& archivePath): path_(archivePath) {
+ArchiveReader::ArchiveReader(const std::string& archivePath): 
+  archivePath_(archivePath) {
   std::ifstream ifs(archivePath, std::ifstream::binary|std::ifstream::ate);
 
   if (!ifs) {
@@ -61,22 +97,58 @@ Archive::Archive(const std::string& archivePath): path_(archivePath) {
   metadata_.ParseFromIstream(&ifs);
 }
 
-void Archive::BuildArchive(const std::string& executablePath, \
-    const PackageDirectory& package, const char* entryPath) {
+const Metadata& ArchiveReader::GetMetadata() const {
+  return metadata_;
+}
+
+ArchiveWriter::ArchiveWriter(const std::string& executablePath): 
+  executablePath_(executablePath) {}
+
+void ArchiveWriter::Build(const PDir& package) {
   multipack::Metadata metadata;
+  std::stringstream buffer;
+
+  PrepareBuffer(package, &buffer, &metadata);
+  FlushBuffer(&buffer, &metadata);
+  FlushMetadata(metadata);
+}
 
 
-  for (PackageDirectory::Iterator it=package.begin();
-    it != package.end(); ++it) {
-    std::cout << it->path().string() << "\n";
+void ArchiveWriter::PrepareBuffer(const PDir& package,
+  std::stringstream* buffer, Metadata* metadata) {
+
+  for (PDir::Iterator it=package.begin(); it!=package.end(); ++it) {
+
+    File* file = metadata->add_file();
+    file->set_offset(buffer->tellp());
+    file->set_file_name(it->path().string());    
+
+    std::ifstream ifs(it->path().string(), std::ifstream::binary);
+    if (!ifs) {
+      throw ArchiveException("Could not open file for reading.");
+    }
+  
+    boost::iostreams::copy(ifs, *buffer);
   }
+}
 
-  std::ofstream ofs(executablePath,
-    std::ofstream::out|std::ofstream::app|std::ofstream::binary);
+void ArchiveWriter::FlushBuffer(
+  std::stringstream* buffer, Metadata* metadata) {
 
-  if (!ofs) {
-    throw multipack::ArchiveException("Could not open file for writing");
-  }
+  std::ofstream ofs = ofstream(executablePath_);
+  metadata->set_file_offset(ofs.tellp());
+
+  boost::iostreams::filtering_ostream stream;
+  stream.push(boost::iostreams::bzip2_compressor());
+  stream.push(ofs);
+
+  buffer->seekp(0); 
+  boost::iostreams::copy(*buffer, stream);
+}
+
+void ArchiveWriter::FlushMetadata(const Metadata& metadata) {
+
+  std::ofstream ofs = ofstream(executablePath_);
 
   uint32_t metadataOffset = htonl(ofs.tellp());
 
@@ -84,7 +156,7 @@ void Archive::BuildArchive(const std::string& executablePath, \
 
   ofs.write(reinterpret_cast<const char*>(&metadataOffset),
     sizeof(metadataOffset));
-  ofs.close();
 }
+
 }  // namespace multipack
 

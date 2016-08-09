@@ -5,16 +5,16 @@
 
 #include "boost/program_options.hpp"
 
-#include "archive.h"
+#include "multipack/archive.h"
 
 using boost::program_options::notify;
 using boost::program_options::parse_command_line;
 using boost::program_options::store;
 using boost::program_options::value;
 
-void check_options(const boost::program_options::variables_map& vm) {
+void check_options(boost::program_options::variables_map* vm) {
   try {
-    notify(vm);
+    notify(*vm);
   } catch(std::exception& ex) {
     std::cerr << ex.what() << "\n";
     exit(-1);
@@ -40,10 +40,12 @@ int main(int argc, char** argv) {
     return 0;
   }
 
-  check_options(vm);
+  check_options(&vm);
 
   multipack::PackageDirectory package(packagePath);
-  multipack::Archive::BuildArchive(executablePath, package, "entry");
+  multipack::ArchiveWriter writer(executablePath);
+
+  writer.Build(package);
   return 0;
 }
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2016 Tomasz Jurkiewicz.
 
-#include "exception.h"
+#include "multipack/exception.h"
 #include <exception>
 
 namespace multipack {
